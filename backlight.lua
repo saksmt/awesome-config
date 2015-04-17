@@ -52,7 +52,7 @@ local step = 5
 local lowerBrightness = function ()
     awful.util.spawn_with_shell('sudo intel_backlight ' .. (getBacklight() - step))
 end
-local raiseBrighness = function ()
+local raiseBrightness = function ()
     awful.util.spawn_with_shell('sudo intel_backlight ' .. (getBacklight() + step))
 end
 
@@ -64,7 +64,7 @@ local bindKeys = function ()
             redraw()
         end),
         awful.key({}, 'XF86MonBrightnessDown', function ()
-            lowerBrighness()
+            lowerBrightness()
             redraw()
         end)
     )
@@ -76,7 +76,7 @@ local uiBindings = awful.util.table.join(
         redraw()
     end),
     awful.button({ }, 4, function ()
-        raiseBrighness()
+        raiseBrightness()
         redraw()
     end)
 )

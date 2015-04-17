@@ -16,20 +16,17 @@ beautiful.init(os.getenv("HOME") .. "/.config/awesome/"..theme.."/theme.lua") --
 
 -- }}}
 
+-- Base configuration {{{
+
+base = require('base-config')
 
 -- Custom widgets {{{
 
-local xrandr        = require('xrandr')               --   Multimonitor manipulation widget
-local kbd           = require('kbd')                  --   Keyboard layout widget
-local touchpad      = require('touchpad')             --   Touchpad widget
-local clock         = require('clock')                --   Clock widget
-local battery       = require('battery')              --   Battery widget
+local widgetList = require('widget-list')
+local autostart  = require('autostart')
+
 local spr           = require('separator')            --   Widget separators
 local run_once      = require('run_once')             --   Autostart library
-local screenshooter = require('screenshooter')        --   Screenshot manager
-local volume        = require('volume')               --   Volume widget
-local mpd           = require('mpd')                  --   MPD widget
-local backlight     = require('backlight')            --   Backlight widget
 local widget        = require('widget_wrapper')       --   Widget manipulation library
 
 -- }}}
@@ -38,17 +35,17 @@ local widget        = require('widget_wrapper')       --   Widget manipulation l
 -- Configuring {{{
 
 -- This is used later as the default terminal and editor to run.
-terminal = "roxterm"
-editor = os.getenv("EDITOR") or "vim"
+terminal = base.terminal
+editor = base.editor
 editor_cmd = terminal .. " -e " .. editor
-local titlebars_enabled = false
+local titlebars_enabled = base.isTitlebarsEnabled
 
 -- Default modkey.
 -- Usually, Mod4 is the key with a logo between Control and Alt.
 -- If you do not like this or do not have such a key,
 -- I suggest you to remap Mod4 to another key using xmodmap or other tools.
 -- However, you can use another modifier like Mod1, but it may interact with others.
-modkey = "Mod4"
+modkey = base.modkey
 
 awful.util.spawn_with_shell("wmname LG3D") -- Java fix
 
@@ -109,23 +106,18 @@ for s = 1, screen.count() do
     -- Widgets that are aligned to the right
     local right_layout = wibox.layout.fixed.horizontal()
     right_layout:add(mypromptbox[s])
-    if s == 1 then
---        widget.separator(right_layout)
-        right_layout:add(require('separator').lg)
-        right_layout:add(require('separator').sm)
-right_layout:add(require('separator').lg)
-        right_layout:add(wibox.widget.systray())
---        widget.wrap(right_layout, {
---            wibox.widget.systray()
---        })
+
+    for i, customWidget in pairs(widgetList) do
+        if customWidget.widget ~= nil then
+            widget.wrap(right_layout, customWidget.widget)
+        end
+        if customWidget == 'systray' and ( s == 1 or not base.onlyOneTray ) then
+                right_layout:add(require('separator').lg)
+                right_layout:add(require('separator').sm)
+                right_layout:add(require('separator').lg)
+                right_layout:add(wibox.widget.systray())
+        end
     end
-    widget.wrap(right_layout, kbd.widget)
-    widget.wrap(right_layout, mpd.widget)
-    widget.wrap(right_layout, touchpad.widget)
-    widget.wrap(right_layout, battery.widget)
-    widget.wrap(right_layout, backlight.widget)
-    widget.wrap(right_layout, volume.widget)
-    widget.wrap(right_layout, clock.widget)
 
     right_layout:add(mylayoutbox[s])
 
@@ -149,13 +141,13 @@ require('rules') -- Initializing rules
 
 -- Bind keys for custom widgets {{{
 
-kbd.bindKey()
-touchpad.bindKey()
-xrandr.bindKey()
-screenshooter.bindKeys()
-volume.bindKeys()
-mpd.bindKeys()
-backlight.bindKeys()
+for i, customWidget in pairs(widgetList) do
+    if customWidget.bindKey ~= nil then
+        customWidget.bindKey()
+    elseif customWidget.bindKeys ~= nil then
+        customWidget.bindKeys()
+    end
+end
 
 -- }}}
 
@@ -166,6 +158,8 @@ root.keys(globalkeys) -- Set keys
 
 -- Autostarted applications {{{
 
-run_once('parcellite')
+for i, app in pairs(autostart) do
+    run_once(app)
+end
 
 -- }}}
