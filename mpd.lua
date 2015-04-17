@@ -4,6 +4,8 @@ local beautiful = require('beautiful')
 local wrapper   = require('widget_wrapper')
 local naughty   = require('naughty')
 local logger    = require('util.logger').globalLogger
+local base      = require('base-config')
+
 require('helper')
 require('util.mpd')
 
@@ -41,7 +43,14 @@ local builder = wrapper.createBuilder()
 builder:add(widgets.prev)
 builder:add(widgets.toggle)
 builder:add(widgets.next)
-builder:add(widgets.favorites)
+
+local isFavoritesSupported = io.popen('which ' .. (base.favoritesMpdCommand or '~') .. ' | grep "not found"')
+
+if isFavoritesSupported:read() == "" then
+    builder:add(widgets.favorites)
+end
+
+isFavoritesSupported:close()
 
 local function updateStatus(force)
     currentStatus = {

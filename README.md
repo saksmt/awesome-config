@@ -1,7 +1,7 @@
 Awesome-WM Configuration
 ========================
 
-There are configuration files for awesome-WM
+There are configuration files for awesome-WM. This is fork of [pro-theme](https://github.com/barwinco/pro) with emphasis on functional part and refactorings, so it may be easier to use and modify, but with some issues in design (like, "favorites" button for MPD-widget)
 
 Screenshots
 ===========
