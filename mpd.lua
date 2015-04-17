@@ -44,9 +44,12 @@ builder:add(widgets.prev)
 builder:add(widgets.toggle)
 builder:add(widgets.next)
 
-local isFavoritesSupported = io.popen('which ' .. (base.favoritesMpdCommand or '~') .. ' | grep "not found"')
+local favoritesMpdCommand = base.favoritesMpdCommand or '~'
+local isFavoritesSupported = favoritesMpdCommand:gmatch('%S+')()
+local checkerCommand = 'which ' .. isFavoritesSupported .. ' | grep -v "not found"'
+isFavoritesSupported = assert(io.popen(checkerCommand))
 
-if isFavoritesSupported:read() == "" then
+if isFavoritesSupported:read() ~= nil then
     builder:add(widgets.favorites)
 end
 
@@ -103,7 +106,7 @@ local function getSongInfo(format, songData)
 end
 
 local function addToFavorites()
-    os.execute('music favorites add')
+    os.execute(favoritesMpdCommand)
     if needsUpdate() then
         updateStatus(true)
     end
@@ -121,7 +124,6 @@ widgets.favorites:buttons(awful.util.table.join(
 ))
 
 updateStatus(true)
-logger:logTable(currentStatus.song)
 
 local tooltip = awful.tooltip({
     objects = getTableParts(widgets).values,

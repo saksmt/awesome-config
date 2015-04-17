@@ -31,6 +31,7 @@ function logger:log(message)
     if self.flush then
         self.file:flush()
     end
+    return self
 end
 
 function logger:logTable(tbl, indent)
