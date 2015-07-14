@@ -1,5 +1,5 @@
 return {
-    'systray'                -- | Sytem tray
+    'systray',               -- | Sytem tray
     require('kbd'),          -- | Keyboard layout widget (ru/en)
     require('mpd'),          -- | Music Player Daemon control widget
     require('touchpad'),     -- | Touchpad control widget

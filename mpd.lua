@@ -1,10 +1,11 @@
-local awful     = require('awful')
-local wibox     = require('wibox')
-local beautiful = require('beautiful')
-local wrapper   = require('widget_wrapper')
-local naughty   = require('naughty')
-local logger    = require('util.logger').globalLogger
-local base      = require('base-config')
+local awful       = require('awful')
+local wibox       = require('wibox')
+local beautiful   = require('beautiful')
+local wrapper     = require('widget_wrapper')
+local naughty     = require('naughty')
+local logger      = require('util.logger').globalLogger
+local base        = require('base-config')
+local stringUtils = require('util.string')
 
 require('helper')
 require('util.mpd')
@@ -102,21 +103,22 @@ local function needsUpdate()
 end
 
 local function getSongInfo(format, songData)
-    return formatString(format, awful.util.table.join(defaultSongData, songData))
+    return stringUtils.format(format, awful.util.table.join(defaultSongData, songData))
 end
 
 local function addToFavorites()
-    os.execute(favoritesMpdCommand)
+    local handler = io.popen(favoritesMpdCommand)
     if needsUpdate() then
         updateStatus(true)
     end
     naughty.notify({
-        text     = getSongInfo("\"{Artist} - {Title}\" added to favorites!", currentStatus.song);
+        text     = stringUtils.htmlSpecialChars(handler:read());
         timeout  = 5;
         position = 'top_right';
         fg       = beautiful.fg_focus;
         bg       = beautiful.bg_focus;
     })
+    handler:close()
 end
 
 widgets.favorites:buttons(awful.util.table.join(

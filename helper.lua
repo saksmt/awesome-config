@@ -1,7 +1,4 @@
 function string:split(pat)
-	-- if true then
-	-- 	return {'hello', 'as'}
-	-- end
 	local t = {}
     local fpat = "(.-)" .. pat
     local last_end = 1
@@ -54,13 +51,6 @@ function copy( orig )
 		cpy = orig
 	end
 	return cpy
-end
-
-function formatString(str, data)
-    for key, value in pairs(data) do
-        str = str:gsub('{' .. key .. '}', value)
-    end
-    return str
 end
 
 function getTableParts(tbl)
