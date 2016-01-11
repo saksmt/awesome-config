@@ -1,6 +1,7 @@
 return {
     'systray',               -- | Sytem tray
     require('kbd'),          -- | Keyboard layout widget (ru/en)
+    require('vpn'),          -- | VPN manager for systemd
     require('mpd'),          -- | Music Player Daemon control widget
     require('touchpad'),     -- | Touchpad control widget
     require('battery'),      -- | Battery indicator

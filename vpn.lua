@@ -73,26 +73,22 @@ builder:add(widgets.left)
 builder:add(widgets.main)
 builder:finish()
 
-widgets.text:buttons(awful.util.table.join(
+local bindings = awful.util.table.join(
     awful.button({}, 1, function ()
         menu:show()
-    end)
-))
-widgets.main:buttons(awful.util.table.join(
-    awful.button({}, 1, function ()
+    end),
+    awful.button({}, 2, function ()
+        menu = createMenu()
+    end),
+    awful.button({}, 3, function ()
         menu:show()
     end)
-))
-widgets.left:buttons(awful.util.table.join(
-    awful.button({}, 1, function ()
-        menu:show()
-    end)
-))
-widgets.label:buttons(awful.util.table.join(
-    awful.button({}, 1, function ()
-        menu:show()
-    end)
-))
+)
+
+widgets.text:buttons(bindings)
+widgets.main:buttons(bindings)
+widgets.left:buttons(bindings)
+widgets.label:buttons(bindings)
 
 return {
     widget = builder:getWidgets()
