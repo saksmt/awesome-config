@@ -3,6 +3,8 @@ local wibox     = require('wibox')
 local beautiful = require('beautiful')
 local wrapper   = require('widget_wrapper')
 
+local notConnectedText = "Not connected"
+
 local current = nil
 local widgets = {}
 
@@ -11,12 +13,19 @@ widgets.text  = wibox.widget.textbox()
 widgets.label = wibox.widget.imagebox()
 widgets.left  = wibox.widget.imagebox()
 
+local function isActive(name)
+    local h = io.popen('systemctl is-active openvpn-client@' .. name .. ' | grep inactive')
+    local result = not h:read()
+    h:close()
+    return result
+end
+
 local function getVpnList()
     local handler = io.popen('ls -1 /etc/openvpn/client 2> /dev/null | grep -v .conf')
     local result = {}
     for line in handler:lines() do
         result[#result + 1] = line
-        if not io.popen('systemctl is-active openvpn-client@' .. line .. ' | grep -v active'):read() then
+        if isActive(line) then
             current = line
         end
     end
@@ -25,10 +34,12 @@ local function getVpnList()
 end
 
 local function disconnect(name)
-    if current == name then
-        current = nil
+    if name then
+        if current == name then
+            current = nil
+        end
+        awful.util.spawn_with_shell('sudo systemctl stop openvpn-client@' .. name)
     end
-    awful.util.spawn_with_shell('sudo systemctl stop openvpn-client@' .. name)
 end
 
 local function connect(name)
@@ -52,13 +63,17 @@ local function createMenu()
     for i = 1, #available do
         result[i] = createMenuEntry(available[i])
     end
+    result[#available + 1] = { "Disconnect", function ()
+        disconnect(current)
+        widgets.text:set_text(notConnectedText)
+    end }
     return awful.menu(result)
 end
 
 local menu = createMenu()
 
 if not current then
-    widgets.text:set_text("Not connected")
+    widgets.text:set_text(notConnectedText)
 else
     widgets.text:set_text(current)
 end

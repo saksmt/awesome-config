@@ -19,7 +19,7 @@ theme.widgets   = {}
 theme.icons     = folder .. "/icons/"
 theme.wallpaper = folder .. "/wallpapers/v1s.png"
 theme.panel     = "png:" .. theme.icons .. "/panel/panel.png"
-theme.font      = "Terminus 9"
+theme.font      = "xos4 Terminus 9"
 
 theme.fg_normal  = "#888888"
 theme.fg_focus   = "#e4e4e4"
@@ -68,7 +68,7 @@ theme.taglist_bg_focus    = "png:" .. theme.icons .. "/panel/taglist/focus.png"
 
 -- | Tasklist | --
 
-theme.tasklist_font       = "Terminus 8"
+theme.tasklist_font       = "xos4 Terminus 8"
 
 theme.tasklist_bg_normal = "png:" .. theme.icons .. "panel/tasklist/normal.png"
 theme.tasklist_bg_focus  = "png:" .. theme.icons .. "panel/tasklist/focus.png"
