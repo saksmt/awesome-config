@@ -2,19 +2,12 @@ local wibox     = require('wibox')
 local naughty   = require("naughty")
 local beautiful = require("beautiful")
 local awful     = require("awful")
-local wrapper   = require('widget_wrapper')
+local batteryId = 'BAT0'
 local interval
 
-local battery = {}
-battery.private = {}
-battery.private.widgets = {}
-battery.private.widgets.text = wibox.widget.textbox()
-battery.private.widgets.label = wibox.widget.imagebox()
-battery.private.widgets.main = wibox.widget.background()
-battery.private.widgets.left = wibox.widget.imagebox()
-battery.private.widgets.left:set_image(beautiful.widgets.display.left)
-battery.private.widgets.main:set_widget(battery.private.widgets.text)
-battery.private.widgets.main:set_bgimage(beautiful.widgets.display.bg)
+widget = wibox.widget {
+    widget = wibox.widget.textbox
+}
 
 local notify = function (status)
     naughty.notify({
@@ -31,14 +24,39 @@ local info = function ()
     return io.popen("acpi -b | cut -d ',' -f3 | cut -d ' ' -f2"):read()
 end
 
-battery.tooltip = awful.tooltip({
-    objects = { battery.private.widgets.text },
+local getBatteryInfo = function ()
+    local sysPath = '/sys/class/power_supply/' .. batteryId .. '/'
+    return {
+        state = io.open(sysPath .. 'state'):read(),
+        capacity = io.open(sysPath .. 'capacity'):read(),
+        current = io.open(sysPath .. 'current_now'),
+        charge = {
+            full = io.open(sysPath .. 'charge_full'),
+            now = io.open(sysPath .. 'charge_now')
+            -- todo: until charge = (charge.full - charge.now) / current * 60 * 60 [seconds]
+            -- todo: until dischage = ???
+        }
+    }
+end
+
+local isCharging = function ()
+    return io.open('/sys/class/power_supply/AC/online'):read() == '1'
+end
+
+local batteryCharge = function ()
+    local sysPath = '/sys/class/power_supply/' .. batteryId .. '/'
+    return tonumber(io.open(sysPath .. 'capacity'):read())
+end
+
+awful.tooltip({
+    objects = { widget },
     timer_function = function ()
-        local wrapped = info()
+
+        local wrapped = 'todo'
         local preffix
-        if io.popen("acpi -b"):read():match("Discharging") then
+        if not isCharging() then
             preffix = " Life-time remaining: "
-        elseif io.popen("acpi -b"):read():match("Charging") then
+        elseif io.open('/sys/class/power_supply/' .. batteryId .. '/status'):read():match('Charging') then
             preffix = " Until charge: "
         else
             preffix = " Charged"
@@ -50,34 +68,9 @@ battery.tooltip = awful.tooltip({
 
 local update = function ()
     local status = {}
-    status.fullInfo = io.popen("acpi -b"):read()
-    status.percentage = io.popen("acpi -b | cut -d \" \" -f4 | cut -d \",\" -f1"):read()
-    status.remaining = io.popen("acpi -b | cut -d ',' -f3 | cut -d ' ' -f2"):read()
-    if status.fullInfo:match("Charging") then
-        battery.private.widgets.label:set_image(beautiful.widgets.battery.charging)
-        battery.private.widgets.text:set_text(status.percentage)
-    elseif status.fullInfo:match("Discharging") then
-        battery.private.widgets.text:set_text(status.percentage)
-        local percentNumber = tonumber(string.sub(status.percentage,1,-2))
-        if percentNumber < 25 then
-            battery.private.widgets.label:set_image(beautiful.widgets.battery.low)
-            if percentNumber < 10 then
-                notify(status)
-                battery.private.widgets.label:set_image(beautiful.widgets.battery.critical)
-            end
-        elseif percentNumber < 75 then
-            battery.private.widgets.label:set_image(beautiful.widgets.battery.middle)
-        else
-            battery.private.widgets.label:set_image(beautiful.widgets.battery.full)
-        end
-        battery.private.widgets.text:set_text(status.percentage)
-    else
-        local percentNumber = tonumber(string.sub(status.percentage,1,-2))
-        if percentNumber > 75 then
-            battery.private.widgets.label:set_image(beautiful.widgets.battery.charging)
-        end
-        battery.private.widgets.text:set_text(status.percentage)
-    end
+    status.percentage = batteryCharge()
+    status.remaining = 'TODO'
+    widget.text = status.percentage
 end
 
 interval = timer({timeout = 5})
@@ -85,12 +78,4 @@ interval:connect_signal('timeout', update)
 interval:start()
 update()
 
-local builder = wrapper.createBuilder()
-builder:add(battery.private.widgets.label)
-builder:add(battery.private.widgets.left)
-builder:add(battery.private.widgets.main)
-builder:finish()
-
-battery.widget = builder:getWidgets()
-
-return battery
+return widget

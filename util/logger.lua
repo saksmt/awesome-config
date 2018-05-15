@@ -1,62 +1,99 @@
-local logger = {}
-local io = io
-local pairs = pairs
-local tostring = tostring
-
-local function getIndentString(indent, symbol)
-    indent = indent * 4
-    if not symbol then symbol = ' ' end
-    local string = ''
-    for i = 1, indent do
-        string = string .. symbol
-    end
-    return string
-end
-
-function logger:new(file, instantFlush)
-    if instantFlush == nil then
-        instantFlush = true
-    end
-    local loggerInstance = {
-        file = io.open(file, 'a');
-        flush = instantFlush
+local _LogLevelClass = function (index, value)
+    local result = {
+        ordinal = function () return index end,
+        value = function () return value end,
+        enumClass = function () return '_LogLevelClass' end
     }
-    setmetatable(loggerInstance, logger)
-    self.__index = self
-    return loggerInstance
+    local comparison = { __lt = function (a, b)
+        if (a.ordinal ~= nil and b.ordinal ~= nil) then
+            return a.ordinal() < b.ordinal()
+        end
+        return false
+    end, __eq = function (a, b)
+        if (a.ordinal ~= nil and b.ordinal ~= nil) then
+            return a.ordinal() == b.ordinal()
+        end
+        return false
+    end }
+
+    setmetatable(result, comparison)
+
+    return result
+end
+local LogLevel = {
+    DEBUG = _LogLevelClass(0, 'debug'),
+    INFO = _LogLevelClass(1, 'info'),
+    WARN = _LogLevelClass(2, 'warn'),
+    ERROR = _LogLevelClass(3, 'error'),
+
+    isValidLogLevel = function (candidate)
+        return candidate['enumClass'] ~= nil and candidate.enumClass() == '_LogLevelClass'
+    end
+}
+
+local function dump(what)
+    local inputType = type(what)
+    if inputType == 'table' then
+        local result = '{'
+        for k, v in pairs(what) do
+            result = result .. ' ' .. dump(k) .. ' = ' .. dump(v) .. ';'
+        end
+        return result .. ' }'
+    elseif inputType == 'function' then
+        return inputType
+    else
+        return tostring(what)
+    end
 end
 
-function logger:log(message)
-    self.file:write(tostring(message) .. "\n")
-    if self.flush then
-        self.file:flush()
-    end
-    return self
-end
+local Logger = function (path)
+    local handle = io.open(path, 'a+')
 
-function logger:logTable(tbl, indent)
-    if not indent then indent = 0 end
-    if type(tbl) ~= 'table' then
-        self:log(tbl)
-        return
+    local logLevel = LogLevel.INFO
+
+    local setLogLevel = function (level)
+        if not LogLevel.isValidLogLevel(level) then
+            error("Attempted to set non existent log level '{}'", level)
+            return
+        end
+        logLevel = level
     end
-    self:log(getIndentString(indent) .. '{')
-    for k, v in pairs(tbl) do
-        if type(v) ~= 'table' then
-            self:log(getIndentString(indent + 1) .. tostring(k) .. ' = ' .. tostring(v))
-        else
-            self:log(tostring(k) .. ' = ')
-            self:logTable(v, indent + 1)
+
+    local genericLog = function (atLogLevel)
+        return function (message, ...)
+            if atLogLevel < logLevel then
+                return
+            end
+
+            local resultMessage = message
+            local argStack = {...}
+            while resultMessage:find('{}') ~= nil and #argStack ~= 0 do
+                local value = dump(argStack[1])
+                table.remove(argStack, 1)
+                resultMessage = resultMessage:gsub('{}', value)
+            end
+
+            handle:write('[' .. atLogLevel.value():upper() .. '] ' .. os.date('%d.%m.%y %H:%M:%S -- ') .. resultMessage .. '\n')
+            handle:flush()
         end
     end
-    self:log(getIndentString(indent) .. '}')
+
+    local debug = genericLog(LogLevel.DEBUG)
+    local info = genericLog(LogLevel.INFO)
+    local warn = genericLog(LogLevel.WARN)
+    local error = genericLog(LogLevel.ERROR)
+
+    return {
+        setLogLevel = setLogLevel,
+        debug = debug,
+        info = info,
+        warn = warn,
+        error = error
+    }
 end
 
-local globalLogger = logger:new(os.getenv('HOME') .. '/awesome.log')
+local defaultLogDir = os.getenv('HOME') .. '/.log'
 
-return {
-    new = function (file, instantFlush)
-        return logger:new(file, instantFlush)
-    end;
-    globalLogger = globalLogger;
-}
+os.execute('mkdir -p -- ' .. defaultLogDir)
+
+return { LogLevel = LogLevel, Logger = Logger, global = Logger(defaultLogDir .. '/awesome.log'), defaultLogDir = defaultLogDir }
