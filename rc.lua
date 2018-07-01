@@ -10,10 +10,6 @@ local beautiful = require("beautiful")
 local naughty = require("naughty")
 local menubar = require("menubar")
 local hotkeys_popup = require("awful.hotkeys_popup").widget
-local kbd = require("./kbd")
-local bat = require('./battery')
-local clock = require('widgets.clock')
-local logger = require('util.logger')
 
 -- Enable hotkeys help widget for VIM and other apps
 -- when client with a matching name is opened:
@@ -46,7 +42,13 @@ end
 
 -- {{{ Variable definitions
 -- Themes define colours, icons, font and wallpapers.
-beautiful.init(gears.filesystem.get_themes_dir() .. "default/theme.lua")
+beautiful.init(gears.filesystem.get_configuration_dir() .. "/theme/theme.lua")
+
+local kbd = require("./kbd")
+local bat = require('./battery')
+local clock = require('widgets.clock')
+local logger = require('util.logger')
+
 logger.global.info('Theme path: {}', gears.filesystem.get_themes_dir())
 
 -- This is used later as the default terminal and editor to run.
@@ -179,7 +181,7 @@ awful.screen.connect_for_each_screen(function(s)
     set_wallpaper(s)
 
     -- Each screen has its own tag table.
-    awful.tag({ "1", "2", "3", "4", "5", "6", "7", "8", "9" }, s, awful.layout.layouts[1])
+    awful.tag({ "", "", "", "", "", "", "", "", "" }, s, awful.layout.layouts[1])
 
     -- Create a promptbox for each screen
     s.mypromptbox = awful.widget.prompt()
@@ -213,13 +215,14 @@ awful.screen.connect_for_each_screen(function(s)
 
     table.insert(widgets, s.mylayoutbox)
 
+    local taglistSpacing = beautiful.get().taglist_spacing
     -- Add widgets to the wibox
     s.mywibox:setup {
         layout = wibox.layout.align.horizontal,
         { -- Left widgets
             layout = wibox.layout.fixed.horizontal,
             mylauncher,
-            s.mytaglist,
+            { s.mytaglist, widget = wibox.container.margin, left = math.ceil(taglistSpacing * 1.5), right = math.floor(taglistSpacing * 1.5) },
             s.mypromptbox,
         },
         s.mytasklist, -- Middle widget

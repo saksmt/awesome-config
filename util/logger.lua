@@ -66,11 +66,11 @@ local Logger = function (path)
             end
 
             local resultMessage = message
-            local argStack = {...}
+            local argStack = {... }
             while resultMessage:find('{}') ~= nil and #argStack ~= 0 do
                 local value = dump(argStack[1])
                 table.remove(argStack, 1)
-                resultMessage = resultMessage:gsub('{}', value)
+                resultMessage = resultMessage:gsub('{}', value, 1)
             end
 
             handle:write('[' .. atLogLevel.value():upper() .. '] ' .. os.date('%d.%m.%y %H:%M:%S -- ') .. resultMessage .. '\n')

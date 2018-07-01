@@ -33,13 +33,13 @@ local months = {
 }
 
 local weekDays = {
+    'Воскресенье',
     'Понедельник',
     'Вторник',
     'Среда',
     'Четверг',
     'Пятница',
-    'Суббота',
-    'Воскресенье'
+    'Суббота'
 }
 
 local dateTooltip = awful.tooltip {
@@ -50,8 +50,10 @@ local dateTooltip = awful.tooltip {
         local day   = os.date('%d')
         local year  = os.date('%Y')
 
+	logger.global.info("Month={}, Week={}, Day={}, Year={}", month, week, day, year)
+
         return "\n "..
-            weekDays[tonumber(week)]  ..", "..
+            weekDays[tonumber(week + 1)]  ..", "..
             day   .." "..
             months[tonumber(month)] .." "..
             year  .." года."..
